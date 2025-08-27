@@ -133,6 +133,13 @@ import (
 	"golang.org/x/crypto/ripemd160"
 )
 
+var PublicKeyPrefixDefault = "FU"
+var PublicKeyPrefixK1 = "PUB_K1_"
+
+func SetPublicKeyPrefixDefault(prefix string) {
+	PublicKeyPrefixDefault = prefix
+}
+
 func SayHello() {
 	println("Hello!!!!")
 }
@@ -166,17 +173,17 @@ func (pk *PublicKey) Bytes() []byte {
 	return pk.Data[:]
 }
 
-func (pk *PublicKey) StringEOS() string {
+func (pk *PublicKey) String() string {
 	hash := ripemd160.New()
 	hash.Write(pk.Data[:])
 	digest := hash.Sum(nil)
 
 	pub := pk.Data[:]
 	pub = append(pub, digest[:4]...)
-	return "EOS" + base58.Encode(pub)
+	return PublicKeyPrefixDefault + base58.Encode(pub)
 }
 
-func (pk *PublicKey) String() string {
+func (pk *PublicKey) StringK1() string {
 	hash := ripemd160.New()
 	hash.Write(pk.Data[:])
 	hash.Write([]byte("K1"))
@@ -184,12 +191,12 @@ func (pk *PublicKey) String() string {
 
 	pub := pk.Data[:]
 	pub = append(pub, digest[:4]...)
-	return "PUB_K1_" + base58.Encode(pub)
+	return PublicKeyPrefixK1 + base58.Encode(pub)
 }
 
 func NewPublicKeyFromBase58(strPub string) (*PublicKey, error) {
-	if strings.HasPrefix(strPub, "EOS") {
-		strPub = strPub[3:]
+	if strings.HasPrefix(strPub, PublicKeyPrefixDefault) {
+		strPub = strPub[len(PublicKeyPrefixDefault):]
 		pub, err := base58.Decode(strPub)
 		if err != nil {
 			return nil, err
@@ -209,8 +216,8 @@ func NewPublicKeyFromBase58(strPub string) (*PublicKey, error) {
 		_pub := &PublicKey{}
 		copy(_pub.Data[:], pub[:])
 		return _pub, nil
-	} else if strings.HasPrefix(strPub, "PUB_K1_") {
-		strPub = strPub[len("PUB_K1_"):]
+	} else if strings.HasPrefix(strPub, PublicKeyPrefixK1) {
+		strPub = strPub[len(PublicKeyPrefixK1):]
 		pub, err := base58.Decode(strPub)
 		if err != nil {
 			return nil, err
